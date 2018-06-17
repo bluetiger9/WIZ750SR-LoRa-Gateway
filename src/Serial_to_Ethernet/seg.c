@@ -107,6 +107,9 @@ void add_data_transfer_bytecount(teDATADIR dir, uint16_t len);
 // Serial debug messages for verifying data transfer
 uint16_t debugSerial_dataTransfer(uint8_t * buf, uint16_t size, teDEBUGTYPE type);
 
+extern void lora_write(uint8_t *buffer, size_t size);
+extern size_t lora_read(uint8_t *buffer);
+
 /* Public & Private functions ------------------------------------------------*/
 
 void do_seg(uint8_t sock)
@@ -180,7 +183,7 @@ void do_seg(uint8_t sock)
 				break;
 		}
         
-        check_n_clear_uart_recv_status(SEG_DATA_UART);
+		//TODO: check_n_clear_uart_recv_status(SEG_DATA_UART);
         
 		// XON/XOFF Software flow control: Check the Buffer usage and Send the start/stop commands
 		// [WIZnet Device] -> [Peer]
@@ -241,7 +244,8 @@ void proc_SEG_udp(uint8_t sock)
 	switch(state)
 	{
 		case SOCK_UDP:
-			if(BUFFER_USED_SIZE(data_rx) || u2e_size)	uart_to_ether(sock);
+			/*if(BUFFER_USED_SIZE(data_rx) || u2e_size)*/
+			uart_to_ether(sock);
 			if(getSn_RX_RSR(sock) 	|| e2u_size)		ether_to_uart(sock);
 			break;
 			
@@ -340,7 +344,8 @@ void proc_SEG_tcp_client(uint8_t sock)
 			}
 			
 			// Serial to Ethernet process
-			if(BUFFER_USED_SIZE(data_rx) || u2e_size)	uart_to_ether(sock);
+			/*if(BUFFER_USED_SIZE(data_rx) || u2e_size)*/
+			uart_to_ether(sock);
 			if(getSn_RX_RSR(sock) 	|| e2u_size)		ether_to_uart(sock);
 			
 			// Check the inactivity timer
@@ -482,7 +487,8 @@ void proc_SEG_tcp_server(uint8_t sock)
 			}
 			
 			// Serial to Ethernet process
-			if(BUFFER_USED_SIZE(data_rx) || u2e_size)	uart_to_ether(sock);
+			/*if(BUFFER_USED_SIZE(data_rx) || u2e_size)*/
+			uart_to_ether(sock);
 			if(getSn_RX_RSR(sock) || e2u_size)	ether_to_uart(sock);
 			
 			// Check the inactivity timer
@@ -700,7 +706,8 @@ void proc_SEG_tcp_mixed(uint8_t sock)
 			}
 			
 			// Serial to Ethernet process
-			if(BUFFER_USED_SIZE(data_rx) || u2e_size)	uart_to_ether(sock);
+			/*if(BUFFER_USED_SIZE(data_rx) || u2e_size)*/
+			uart_to_ether(sock);
 			if(getSn_RX_RSR(sock) 	|| e2u_size)		ether_to_uart(sock);
 			
 			// Check the inactivity timer
@@ -833,8 +840,10 @@ void uart_to_ether(uint8_t sock)
 	if(get_phylink_in_pin() != 0) return; // PHY link down
 #endif
 	
-	// UART ring buffer -> user's buffer
-	len = get_serial_data();
+	// LoRa read
+	len = lora_read(g_send_buf + u2e_size);
+	u2e_size += len;
+	//len = get_serial_data();
 	
 	if(len > 0)
 	{
@@ -920,7 +929,7 @@ uint16_t get_serial_data(void)
 		/* Checking Data packing option: charactor delimiter */
 		if((netinfo->packing_delimiter[0] != 0x00) && (len == 1))
 		{
-			g_send_buf[u2e_size] = (uint8_t)uart_getc(SEG_DATA_UART);
+			//TODO: g_send_buf[u2e_size] = (uint8_t)uart_getc(SEG_DATA_UART);
 			if(netinfo->packing_delimiter[0] == g_send_buf[u2e_size])
 			{
 				return u2e_size;
@@ -936,7 +945,7 @@ uint16_t get_serial_data(void)
 		// ## 20150427 bugfix: Incorrect serial data storing (UART ring buffer to g_send_buf)
 		for(i = 0; i < len; i++)
 		{
-			g_send_buf[u2e_size++] = (uint8_t)uart_getc(SEG_DATA_UART);
+			//TODO: g_send_buf[u2e_size++] = (uint8_t)uart_getc(SEG_DATA_UART);
 		}
 		
 		return u2e_size;
@@ -946,7 +955,7 @@ uint16_t get_serial_data(void)
 		/* Checking Data packing options */
 		for(i = 0; i < len; i++)
 		{
-			g_send_buf[u2e_size++] = (uint8_t)uart_getc(SEG_DATA_UART);
+			//TODO: g_send_buf[u2e_size++] = (uint8_t)uart_getc(SEG_DATA_UART);
 			
 			// Packing delimiter: character option
 			if((netinfo->packing_delimiter[0] != 0x00) && (netinfo->packing_delimiter[0] == g_send_buf[u2e_size - 1]))
@@ -984,7 +993,7 @@ void ether_to_uart(uint8_t sock)
 	if(serial->flow_control == flow_rts_cts)
 	{
 #ifdef __USE_GPIO_HARDWARE_FLOWCONTROL__
-		if(get_uart_cts_pin(SEG_DATA_UART) != UART_CTS_LOW) return;
+		//TODO: if(get_uart_cts_pin(SEG_DATA_UART) != UART_CTS_LOW) return;
 #else
 		; // check the CTS reg
 #endif
@@ -1051,56 +1060,60 @@ void ether_to_uart(uint8_t sock)
 	// Ethernet data transfer to DATA UART
 	if(e2u_size != 0)
 	{
-		if(serial->dsr_en == SEG_ENABLE) // DTR / DSR handshake (flowcontrol)
-		{
-			if(get_flowcontrol_dsr_pin() == 0) return;
-		}
-//////////////////////////////////////////////////////////////////////
-		if(serial->uart_interface == UART_IF_RS422_485)
-		{
-			if((serial->serial_debug_en == SEG_DEBUG_E2S) || (serial->serial_debug_en == SEG_DEBUG_ALL))
-			{
-				debugSerial_dataTransfer(g_recv_buf, e2u_size, SEG_DEBUG_E2S);
-			}
-			
-			uart_rs485_enable(SEG_DATA_UART);
-			for(i = 0; i < e2u_size; i++) uart_putc(SEG_DATA_UART, g_recv_buf[i]);
-			uart_rs485_disable(SEG_DATA_UART);
-			
-			add_data_transfer_bytecount(SEG_ETHER_TX, e2u_size);
-			e2u_size = 0;
-		}
-//////////////////////////////////////////////////////////////////////
-		else if(serial->flow_control == flow_xon_xoff) 
-		{
-			if(isXON == SEG_ENABLE)
-			{
-				if((serial->serial_debug_en == SEG_DEBUG_E2S) || (serial->serial_debug_en == SEG_DEBUG_ALL))
-				{
-					debugSerial_dataTransfer(g_recv_buf, e2u_size, SEG_DEBUG_E2S);
-				}
-				
-				for(i = 0; i < e2u_size; i++) uart_putc(SEG_DATA_UART, g_recv_buf[i]);
-				add_data_transfer_bytecount(SEG_ETHER_TX, e2u_size);
-				e2u_size = 0;
-			}
-			//else
-			//{
-			//	;//XOFF!!
-			//}
-		}
-		else
-		{
-			if((serial->serial_debug_en == SEG_DEBUG_E2S) || (serial->serial_debug_en == SEG_DEBUG_ALL))
-			{
-				debugSerial_dataTransfer(g_recv_buf, e2u_size, SEG_DEBUG_E2S);
-			}
-			
-			for(i = 0; i < e2u_size; i++) uart_putc(SEG_DATA_UART, g_recv_buf[i]);
-			
-			add_data_transfer_bytecount(SEG_ETHER_TX, e2u_size);
-			e2u_size = 0;
-		}
+		lora_write(g_recv_buf, e2u_size);
+		add_data_transfer_bytecount(SEG_ETHER_TX, e2u_size);
+		e2u_size = 0;
+
+//		if(serial->dsr_en == SEG_ENABLE) // DTR / DSR handshake (flowcontrol)
+//		{
+//			if(get_flowcontrol_dsr_pin() == 0) return;
+//		}
+////////////////////////////////////////////////////////////////////////
+//		if(serial->uart_interface == UART_IF_RS422_485)
+//		{
+//			if((serial->serial_debug_en == SEG_DEBUG_E2S) || (serial->serial_debug_en == SEG_DEBUG_ALL))
+//			{
+//				debugSerial_dataTransfer(g_recv_buf, e2u_size, SEG_DEBUG_E2S);
+//			}
+//
+//			//TODO: uart_rs485_enable(SEG_DATA_UART);
+//			//TODO: for(i = 0; i < e2u_size; i++) uart_putc(SEG_DATA_UART, g_recv_buf[i]);
+//			//TODO: uart_rs485_disable(SEG_DATA_UART);
+//
+//			add_data_transfer_bytecount(SEG_ETHER_TX, e2u_size);
+//			e2u_size = 0;
+//		}
+////////////////////////////////////////////////////////////////////////
+//		else if(serial->flow_control == flow_xon_xoff)
+//		{
+//			if(isXON == SEG_ENABLE)
+//			{
+//				if((serial->serial_debug_en == SEG_DEBUG_E2S) || (serial->serial_debug_en == SEG_DEBUG_ALL))
+//				{
+//					debugSerial_dataTransfer(g_recv_buf, e2u_size, SEG_DEBUG_E2S);
+//				}
+//
+//				//TODO: for(i = 0; i < e2u_size; i++) uart_putc(SEG_DATA_UART, g_recv_buf[i]);
+//				//TODO: add_data_transfer_bytecount(SEG_ETHER_TX, e2u_size);
+//				//TODO: e2u_size = 0;
+//			}
+//			//else
+//			//{
+//			//	;//XOFF!!
+//			//}
+//		}
+//		else
+//		{
+//			if((serial->serial_debug_en == SEG_DEBUG_E2S) || (serial->serial_debug_en == SEG_DEBUG_ALL))
+//			{
+//				debugSerial_dataTransfer(g_recv_buf, e2u_size, SEG_DEBUG_E2S);
+//			}
+//
+//			for(i = 0; i < e2u_size; i++) uart_putc(SEG_DATA_UART, g_recv_buf[i]);
+//
+//			add_data_transfer_bytecount(SEG_ETHER_TX, e2u_size);
+//			e2u_size = 0;
+//		}
 	}
 }
 
@@ -1191,7 +1204,7 @@ void init_trigger_modeswitch(uint8_t mode)
 		if(serial->serial_debug_en)
 		{
 			printf(" > SEG:AT Mode\r\n");
-			uart_puts(SEG_DATA_UART, (uint8_t *)"SEG:AT Mode\r\n", sizeof("SEG:AT Mode\r\n"));
+			//TODO: uart_puts(SEG_DATA_UART, (uint8_t *)"SEG:AT Mode\r\n", sizeof("SEG:AT Mode\r\n"));
 		}
 	}
 	else // DEVICE_GW_MODE
@@ -1203,7 +1216,7 @@ void init_trigger_modeswitch(uint8_t mode)
 		if(serial->serial_debug_en)
 		{
 			printf(" > SEG:GW Mode\r\n");
-			uart_puts(SEG_DATA_UART, (uint8_t *)"SEG:GW Mode\r\n", sizeof("SEG:GW Mode\r\n"));
+			//TODO: uart_puts(SEG_DATA_UART, (uint8_t *)"SEG:GW Mode\r\n", sizeof("SEG:GW Mode\r\n"));
 		}
 	}
 	

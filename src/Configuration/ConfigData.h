@@ -22,8 +22,6 @@
 #define MAX_SAVE_RETRY              5
 #define SAVE_INTERVAL_MS            1000
 
-
-
 struct __network_info_common {
 	uint8_t mac[6];
 	uint8_t local_ip[4];
@@ -114,6 +112,10 @@ typedef struct __DevConfig {
 	struct __firmware_update_extend firmware_update_extend;		// ## Eric, Field added for Extended function: Firmware update by HTTP (Remote) Server
 } __attribute__((packed)) DevConfig;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 DevConfig* get_DevConfig_pointer(void);
 void set_DevConfig_to_factory_value(void);
 void load_DevConfig_from_storage(void);
@@ -130,4 +132,7 @@ void set_dhcp_mode(void);
 void set_static_mode(void);
 void set_mac(uint8_t *mac);
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* S2E_PACKET_H_ */

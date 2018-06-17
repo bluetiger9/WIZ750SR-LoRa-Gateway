@@ -181,7 +181,7 @@ void do_segcp(void)
         {
             if(opmode == DEVICE_AT_MODE) 
             {
-                if(dev_config->serial_info[0].serial_debug_en) uart_puts(SEG_DATA_UART, "REBOOT\r\n", 8);
+            	// TODO: if(dev_config->serial_info[0].serial_debug_en) uart_puts(SEG_DATA_UART, "REBOOT\r\n", 8);
             }
             
             device_reboot();
@@ -474,7 +474,7 @@ uint16_t proc_SEGCP(uint8_t* segcp_req, uint8_t* segcp_rep)
                         sprintf(trep, "%d", get_connection_status_io(STATUS_TCPCONNECT_PIN)); // STATUS_TCPCONNECT_PIN (in) == DSR_PIN (in)
                         break;
                     case SEGCP_RX:
-                        uart_rx_flush(SEG_DATA_UART);
+                    	// TODO:  uart_rx_flush(SEG_DATA_UART);
                         sprintf(trep, "%s", "FLUSH");
                         //ret |= SEGCP_RET_ERR_NOTAVAIL;
                         break;
@@ -1140,7 +1140,7 @@ uint16_t proc_SEGCP(uint8_t* segcp_req, uint8_t* segcp_rep)
 #ifdef _SEGCP_DEBUG_
                 printf("ERROR : %s\r\n",trep);
 #endif
-                uart_rx_flush(SEG_DATA_UART);
+                // TODO: uart_rx_flush(SEG_DATA_UART);
                 return ret;
             }
         }
@@ -1348,7 +1348,7 @@ uint16_t proc_SEGCP_uart(uint8_t * segcp_rep)
     
     if(BUFFER_USED_SIZE(data_rx))
     {
-        len = uart_get_commandline(SEG_DATA_UART, segcp_req, (sizeof(segcp_req) - 1));
+    	// TODO: len = uart_get_commandline(SEG_DATA_UART, segcp_req, (sizeof(segcp_req) - 1));
         
         if(len != 0)
         {
@@ -1361,7 +1361,7 @@ uint16_t proc_SEGCP_uart(uint8_t * segcp_rep)
                     printf("%s",segcp_rep);
                 }
                 
-                uart_puts(SEG_DATA_UART, segcp_rep, strlen(segcp_rep));
+                // TODO: uart_puts(SEG_DATA_UART, segcp_rep, strlen(segcp_rep));
                 
             }
         }

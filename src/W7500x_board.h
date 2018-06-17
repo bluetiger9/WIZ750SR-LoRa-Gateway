@@ -377,6 +377,9 @@
 	extern uint8_t flag_check_phylink;
 	extern uint8_t flag_hw_trig_enable;
 	
+#ifdef __cplusplus
+extern "C" {
+#endif
 	void W7500x_Board_Init(void);
 	void Supervisory_IC_Init(void);
 	
@@ -400,5 +403,9 @@
 	void LED_Toggle(Led_TypeDef Led);
 	uint8_t get_LED_Status(Led_TypeDef Led);
 	
+#ifdef __cplusplus
+}
+#endif
+
 #endif
 

@@ -82,6 +82,9 @@ enum
    DHCP_STOPPED      ///< Stop procssing DHCP protocol
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 /*
  * @brief DHCP client initialization (outside of the main loop)
  * @param s   - socket number
@@ -151,4 +154,7 @@ void getDNSfromDHCP(uint8_t* ip);
  */
 uint32_t getDHCPLeasetime(void);
 
+#ifdef __cplusplus
+}
+#endif
 #endif	/* _DHCP_H_ */

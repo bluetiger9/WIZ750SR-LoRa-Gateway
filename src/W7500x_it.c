@@ -33,6 +33,7 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 extern void TimingDelay_Decrement(void);
+
 /* Private functions ---------------------------------------------------------*/
 
 /******************************************************************************/
@@ -170,6 +171,7 @@ void PORT0_Handler(void)
 void PORT1_Handler(void)
 {}
 
+void (*gpioc_int_callback)();
 
 /**
   * @brief  This function handles PORT2 Handler.
@@ -177,7 +179,11 @@ void PORT1_Handler(void)
   * @retval None
   */
 void PORT2_Handler(void)
-{}
+{
+	if (gpioc_int_callback) {
+		gpioc_int_callback();
+	}
+}
 
 
 /**

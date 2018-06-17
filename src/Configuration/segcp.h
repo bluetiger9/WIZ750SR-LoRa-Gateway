@@ -106,6 +106,9 @@ typedef enum {SEGCP_MC, SEGCP_VR, SEGCP_MN, SEGCP_IM, SEGCP_OP, SEGCP_DD, SEGCP_
 
 extern uint8_t gSEGCPPRIVILEGE;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 void do_segcp(void);
 
 uint8_t parse_SEGCP(uint8_t * pmsg, uint8_t * param);
@@ -118,4 +121,8 @@ uint16_t proc_SEGCP_uart(uint8_t * segcp_rep);
 void send_keepalive_packet_configtool(uint8_t sock);
 
 void segcp_timer_msec(void); // for timer
+
+#ifdef __cplusplus
+}
+#endif
 #endif

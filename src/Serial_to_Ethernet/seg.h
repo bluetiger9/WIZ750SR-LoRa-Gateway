@@ -48,6 +48,10 @@ typedef enum{
     SEG_DEBUG_ALL      = 4
 } teDEBUGTYPE;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Serial to Ethernet function handler; call by main loop
 void do_seg(uint8_t sock);
 
@@ -73,6 +77,11 @@ void init_time_delimiter_timer(void); 			// Serial data packing option [Time]: T
 // UART tx/rx and Ethernet tx/rx data transfer bytes counter
 void clear_data_transfer_bytecount(teDATADIR dir);
 uint32_t get_data_transfer_bytecount(teDATADIR dir);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* SEG_H_ */
 

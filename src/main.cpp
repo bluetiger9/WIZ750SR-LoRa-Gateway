@@ -52,11 +52,22 @@
 #include "segcp.h"
 #include "ConfigData.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "timerHandler.h"
 #include "uartHandler.h"
 #include "deviceHandler.h"
 #include "flashHandler.h"
 #include "gpioHandler.h"
+
+#include "diag/Trace.h"
+#include "LoRa.h"
+
+#ifdef __cplusplus
+}
+#endif
 
 // ## for debugging
 //#include "loopback.h"
@@ -66,6 +77,7 @@
 
 /* Private define ------------------------------------------------------------*/
 #define _MAIN_DEBUG_	// debugging message enable
+
 
 /* Private function prototypes -----------------------------------------------*/
 static void W7500x_Init(void);
@@ -80,8 +92,37 @@ void display_Dev_Info_main(void);
 void display_Dev_Info_dhcp(void);
 void display_Dev_Info_dns(void);
 
+
+extern "C" {
+
 void delay(__IO uint32_t milliseconds); //Notice: used ioLibray
 void TimingDelay_Decrement(void);
+
+}
+
+extern "C" {
+
+void lora_write(uint8_t *buffer, size_t size) {
+	LoRa.beginPacket();
+	LoRa.write(buffer, size);
+	LoRa.endPacket();
+}
+
+size_t lora_read(uint8_t *buffer) {
+	//printf("LoRa read: available=%d\n", LoRa.available());
+	if (LoRa.parsePacket() > 0) {
+		int data;
+		int idx = 0;
+		while ((data = LoRa.read()) >= 0) {
+			buffer[idx++] = (uint8_t) data;
+		}
+		//printf("read: %d bytes\n", idx); delay(10);
+		return idx;
+	}
+	return 0;
+}
+
+}
 
 /* Private variables ---------------------------------------------------------*/
 static __IO uint32_t TimingDelay;
@@ -200,6 +241,12 @@ int main(void)
     
     /* GPIO Initialization*/
     IO_Configuration();
+
+    trace_printf("initializing Lora!\r\n");
+    LoRa.begin(434E6);
+
+    trace_printf("Lora: dumping registers!\r\n");
+    LoRa.dumpRegisters();
 
     while(1) // main loop
     {
